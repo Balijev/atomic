@@ -97,7 +97,7 @@ function lehoia_customize_register($wp_customize)
     ));
 
     $wp_customize->add_setting('hero_description', array(
-        'default'           => 'Tražite vrhunsku pravnu pomoć? Advokat Ahmed Tomić nudi beskompromisnu posvećenost i dokazanu stručnost. Njegova praksa je utemeljena na povjerenju i rezultatima, čineći ga prvim izborom za sve koji traže sigurnost i profesionalizam u svijetu prava.',
+        'default'           => 'Tražite vrhunsku pravnu pomoć? Advokat Ahmed Tomić nudi beskompromisnu posvećenost i dokazanu stručnost. Njegova praksa je utemeljena na povjerenju i rezultat[...]',
         'sanitize_callback' => 'sanitize_textarea_field',
     ));
     $wp_customize->add_control('hero_description', array(
@@ -466,7 +466,9 @@ function lehoia_create_pages()
         }
     }
 }
-register_activation_hook(__FILE__, 'lehoia_create_pages');
+// register_activation_hook(__FILE__, 'lehoia_create_pages'); // not reliable in themes
+// Ensure pages are created when switching theme
+add_action('after_switch_theme', 'lehoia_create_pages');
 
 // Add menu items programmatically on theme activation
 function lehoia_create_menu()
@@ -506,65 +508,48 @@ function lehoia_create_menu()
 }
 add_action('after_switch_theme', 'lehoia_create_menu');
 
-// Contact Form Shortcode
+// Contact Form Shortcode (now posts to admin-post.php)
 function lehoia_contact_form_shortcode()
 {
     ob_start();
 
-    $name    = '';
-    $email   = '';
-    $phone   = '';
-    $service = '';
-    $message = '';
-    $notice  = '';
-
-    if ('POST' === $_SERVER['REQUEST_METHOD'] && isset($_POST['contact_form_submit'])) {
-        if (isset($_POST['lehoia_contact_form_nonce']) && wp_verify_nonce($_POST['lehoia_contact_form_nonce'], 'lehoia_contact_form_submit')) {
-            $name    = sanitize_text_field($_POST['name'] ?? '');
-            $email   = sanitize_email($_POST['email'] ?? '');
-            $phone   = sanitize_text_field($_POST['phone'] ?? '');
-            $service = sanitize_text_field($_POST['service'] ?? '');
-            $message = sanitize_textarea_field($_POST['message'] ?? '');
-
-            $to      = get_option('admin_email');
-            $subject = 'New Contact Form Submission - ' . get_bloginfo('name');
-            $body    = "Name: $name\nEmail: $email\nPhone: $phone\nService: $service\n\nMessage:\n$message";
-            $headers = array('Content-Type: text/html; charset=UTF-8');
-
-            if (wp_mail($to, $subject, nl2br($body), $headers)) {
-                $notice = '<div class="alert alert-success">' . esc_html__('Hvala vam što ste nas kontaktirali. Uskoro ćemo vam se javiti.', 'lehoia') . '</div>';
-                $name = $email = $phone = $service = $message = '';
-            } else {
-                $notice = '<div class="alert alert-error">' . esc_html__('Došlo je do greške prilikom slanja vaše poruke. Molimo pokušajte ponovo kasnije.', 'lehoia') . '</div>';
-            }
-        } else {
-            $notice = '<div class="alert alert-error">' . esc_html__('Došlo je do greške s formom. Pokušajte ponovo.', 'lehoia') . '</div>';
+    // Notices based on redirect
+    $notice = '';
+    if ( isset( $_GET['contact_status'] ) ) {
+        $status = sanitize_text_field( $_GET['contact_status'] );
+        if ( 'success' === $status ) {
+            $notice = '<div class="alert alert-success">' . esc_html__( 'Hvala vam što ste nas kontaktirali. Uskoro ćemo vam se javiti.', 'lehoia' ) . '</div>';
+        } elseif ( 'error' === $status ) {
+            $notice = '<div class="alert alert-error">' . esc_html__( 'Došlo je do greške prilikom slanja vaše poruke. Molimo pokušajte ponovo kasnije.', 'lehoia' ) . '</div>';
+        } elseif ( 'nonce_error' === $status ) {
+            $notice = '<div class="alert alert-error">' . esc_html__( 'Došlo je do greške s formom. Pokušajte ponovo.', 'lehoia' ) . '</div>';
         }
     }
 
     echo $notice;
 ?>
-    <form method="post" action="<?php echo esc_url(get_permalink()); ?>" class="contact-form">
+    <form method="post" action="<?php echo esc_url( admin_url('admin-post.php') ); ?>" class="contact-form">
         <?php wp_nonce_field('lehoia_contact_form_submit', 'lehoia_contact_form_nonce'); ?>
+        <input type="hidden" name="action" value="lehoia_contact_form" />
         <div class="input-wrapper">
             <label for="name">Ime i Prezime</label>
-            <input class="input w-input" type="text" id="name" name="name" placeholder="Unesite svoje ime i prezime?" required value="<?php echo esc_attr($name); ?>" />
+            <input class="input w-input" type="text" id="name" name="name" placeholder="Unesite svoje ime i prezime?" required value="<?php echo esc_attr( $_POST['name'] ?? '' ); ?>" />
         </div>
         <div class="input-wrapper">
             <label for="email">Email</label>
-            <input class="input w-input" type="email" id="email" name="email" placeholder="Koji je Vaš E-mail?" required value="<?php echo esc_attr($email); ?>" />
+            <input class="input w-input" type="email" id="email" name="email" placeholder="Koji je Vaš E-mail?" required value="<?php echo esc_attr( $_POST['email'] ?? '' ); ?>" />
         </div>
         <div class="input-wrapper">
             <label for="phone">Broj Telefona</label>
-            <input class="input w-input" type="tel" id="phone" name="phone" placeholder="+387 xx xxx xxx" required value="<?php echo esc_attr($phone); ?>" />
+            <input class="input w-input" type="tel" id="phone" name="phone" placeholder="+387 xx xxx xxx" required value="<?php echo esc_attr( $_POST['phone'] ?? '' ); ?>" />
         </div>
         <div class="input-wrapper">
             <label for="service">Servis</label>
-            <input class="input w-input" type="text" id="service" name="service" placeholder="Ex. Zaposlenik" required value="<?php echo esc_attr($service); ?>" />
+            <input class="input w-input" type="text" id="service" name="service" placeholder="Ex. Zaposlenik" required value="<?php echo esc_attr( $_POST['service'] ?? '' ); ?>" />
         </div>
         <div class="input-wrapper">
             <label for="message">Poruka</label>
-            <textarea class="text-area w-input" id="message" name="message" placeholder="Zdravo, želio bih razgovarati o..." rows="5"><?php echo esc_textarea($message); ?></textarea>
+            <textarea class="text-area w-input" id="message" name="message" placeholder="Zdravo, želio bih razgovarati o..." rows="5"><?php echo esc_textarea( $_POST['message'] ?? '' ); ?></textarea>
         </div>
         <div class="input-wrapper">
             <input type="submit" name="contact_form_submit" value="Pošalji poruku" class="button-primary w-button" />
@@ -574,4 +559,40 @@ function lehoia_contact_form_shortcode()
     return ob_get_clean();
 }
 add_shortcode('contact_form', 'lehoia_contact_form_shortcode');
-?>
+
+// Handler for admin-post.php submissions
+add_action( 'admin_post_nopriv_lehoia_contact_form', 'lehoia_handle_contact_form' );
+add_action( 'admin_post_lehoia_contact_form', 'lehoia_handle_contact_form' );
+
+function lehoia_handle_contact_form() {
+    // Verify nonce
+    if ( ! isset( $_POST['lehoia_contact_form_nonce'] ) || ! wp_verify_nonce( $_POST['lehoia_contact_form_nonce'], 'lehoia_contact_form_submit' ) ) {
+        wp_safe_redirect( add_query_arg( 'contact_status', 'nonce_error', wp_get_referer() ?: home_url() ) );
+        exit;
+    }
+
+    $name    = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+    $email   = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
+    $phone   = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
+    $service = sanitize_text_field( wp_unslash( $_POST['service'] ?? '' ) );
+    $message = sanitize_textarea_field( wp_unslash( $_POST['message'] ?? '' ) );
+
+    $to      = get_option( 'admin_email' );
+    $subject = 'New Contact Form Submission - ' . get_bloginfo( 'name' );
+    $body    = "Name: $name\nEmail: $email\nPhone: $phone\nService: $service\n\nMessage:\n$message";
+
+    // Use site admin email as From and include Reply-To as user's email (better deliverability)
+    $from = get_bloginfo('name') . ' <' . $to . '>';
+    $headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . $from );
+    if ( ! empty( $email ) ) {
+        $headers[] = 'Reply-To: ' . $email;
+    }
+
+    if ( wp_mail( $to, $subject, nl2br( esc_html( $body ) ), $headers ) ) {
+        wp_safe_redirect( add_query_arg( 'contact_status', 'success', wp_get_referer() ?: home_url() ) );
+        exit;
+    } else {
+        wp_safe_redirect( add_query_arg( 'contact_status', 'error', wp_get_referer() ?: home_url() ) );
+        exit;
+    }
+}

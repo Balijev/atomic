@@ -508,6 +508,35 @@ body {
   }
 }
 
+/* --- Page template specific styles (moved from inline) --- */
+.page-section {
+  padding: 6rem 1.5rem 4rem;
+}
+
+.page-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 3rem;
+}
+
+@media (max-width: 900px) {
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.entry-title-large {
+  font-size: 3rem;
+  color: hsl(var(--foreground));
+  margin-bottom: 1rem;
+}
+
+.entry-content {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: hsl(var(--muted-foreground));
+}
+
 /* Cards */
 .card {
   background-color: hsl(var(--card));
@@ -573,6 +602,8 @@ body {
 .font-bold { font-weight: bold; }
 .uppercase { text-transform: uppercase; }
 .mb-4 { margin-bottom: 1rem; }
+.mb-8 { margin-bottom: 2rem; }
+.pt-4 { padding-top: 1rem; }
 .mb-8 { margin-bottom: 2rem; }
 .pt-4 { padding-top: 1rem; }
 .py-20 { padding: 5rem 0; }

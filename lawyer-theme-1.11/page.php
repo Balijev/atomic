@@ -1,18 +1,18 @@
 <?php get_header(); ?>
 
-<section class="section page-section" style="padding: 6rem 1.5rem 4rem;">
+<section class="section page-section">
     <div class="container">
-        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 3rem;">
+        <div class="page-grid">
             <main>
                 <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
                     <article class="page-article">
                         <header class="entry-header text-left mb-12">
-                            <h1 class="entry-title font-serif" style="font-size: 3rem; color: hsl(var(--foreground)); margin-bottom: 1rem;">
+                            <h1 class="entry-title entry-title-large font-serif">
                                 <?php the_title(); ?>
                             </h1>
                         </header>
 
-                        <div class="entry-content" style="font-size: 1.125rem; line-height: 1.8; color: hsl(var(--muted-foreground));">
+                        <div class="entry-content">
                             <?php the_content(); ?>
                         </div>
                     </article>
